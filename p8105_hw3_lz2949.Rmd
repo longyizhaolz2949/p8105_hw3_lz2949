@@ -140,6 +140,7 @@ states_ten = ordered_brfss |>
 states_ten = states_ten |>
   filter(unique_locations >= 7)
 ```
+Comments: 
 
 Construct a dataset that is limited to Excellent responses and contains, year, state, and a variable averages the data_value accross locations within a state. Make a spaghetti plot. 
 
@@ -161,6 +162,7 @@ ggplot(exc_df, aes(x = year,
     y = "Average Data Value"
   )
 ```
+Comments: 
 
 Make a two-panel plot showing, for 2006/2010, distribution of data_value for responses (poor to excellent) among locations in NY state. 
 
@@ -178,6 +180,7 @@ ggplot(ny_df, aes(x = year, fill = response)) + geom_bar() +
 # among locations??
 
 ```
+Comments: 
 
 ## Problem 3
 
@@ -218,6 +221,7 @@ education_table = m_nhanes %>%
 
 kable(education_table, caption = "Sex and corresponding education level")
 ```
+Comments: 
 
 Create a visualization of the age distributions for men and women in each education category. 
 ```{r}
@@ -228,6 +232,7 @@ ggplot(education_table, aes(x= education))+
        x = "education", 
        y = "number of individuals") 
 ```
+Comments: 
 
 Using tidies dataset, aggregate across minutes to create a total activity variable for each participant. Plot total activities (y) against age (x). Compare men to women and have separater panels for each education level. Include trend line or a smooth to illustrate differences. 
 
@@ -247,8 +252,26 @@ ggplot(sum_nhanes, aes(x = age, y = sum_acti, color = sex)) +
     y = "Total Activity"
   ) 
 ```
+Comments: 
 
+Make a three-panel plot that shows the 24 hour activity time courses for each education level and use color to indicate sex. 
 
+```{r}
+day_activity = m_nhanes |>
+  pivot_longer(cols = min1:min1440, names_to = "activity_minutes", values_to = "activity") 
 
+day_activity$activity_minutes = gsub("min", "", day_activity$activity_minutes) # remove "min" in the xlabel
 
+ggplot(day_activity, aes(x=activity_minutes, y = activity, color = sex))+
+  geom_line() +
+  facet_wrap(~education, scales = "free_y", ncol = 1) +
+  labs(
+    title = "plot of 24hrs activity",
+    x = "activity minuntes in 24hrs",
+    y = "activity"
+  ) +
+  scale_x_discrete(labels = function(x) ifelse(seq_along(x) %% 70 == 0, x, ""))
+# not sure
+```
+Comments: 
 
