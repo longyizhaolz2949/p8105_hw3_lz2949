@@ -5,3 +5,96 @@ date: "2023-10-09"
 output: github_document
 ---
 
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+```
+
+## Problem 1
+```{r}
+library(p8105.datasets)
+data("instacart")
+```
+
+```{r}
+num_aisles = n_distinct(instacart$aisle_id) # number of dinstinct aisles numbers
+frequent_aisles = which.max(instacart$aisle_id) # which aisles are the most item ordered from
+frequent_aisles
+```
+
+make a plot that shows the number of items ordered in each aisle, (only aisles ordered more than 10000 items)
+```{r}
+item_aisles = instacart %>%
+  group_by (aisle_id) %>%
+  summarize(total_item = sum(order_number)) |>
+  filter(total_item >= 10000) 
+
+ggplot(item_aisles, aes(x = aisle_id, y = total_item)) +
+  geom_point(aes(color = aisle_id)) +
+  labs(title = "Number of Items sold in each Aisle (>=10000)")
+  
+```
+
+Make a table showing the three most popular items in "baking ingredients", "dog food care", and "packaged vegetable fruits"
+
+```{r}
+library(knitr)
+three_aisle = instacart %>%
+  filter(aisle %in% c("baking ingredients", "dog food care", "packaged vegetables fruits"))
+
+# filter product name and add the order_number together
+pop_baking = three_aisle  %>%
+  filter(aisle == "baking ingredients") %>%
+  group_by (product_name) %>%
+  summarize(total_item = sum(order_number))
+most_baking = pop_baking %>%
+  arrange(desc(total_item)) %>%
+  slice (1) %>%
+  mutate(aisle = "baking ingredients")
+
+# perform similar action to other two aisle
+pop_dog = three_aisle  %>%
+  filter(aisle == "dog food care") %>%
+  group_by (product_name) %>%
+  summarize(total_item = sum(order_number))
+most_dog= pop_dog %>%
+  arrange(desc(total_item)) %>%
+  slice (1) %>%
+  mutate(aisle = "dog food care")
+
+pop_veg = three_aisle  %>%
+  filter(aisle == "packaged vegetables fruits") %>%
+  group_by (product_name) %>%
+  summarize(total_item = sum(order_number))
+most_veg= pop_veg %>%
+  arrange(desc(total_item)) %>%
+  slice (1) %>%
+  mutate(aisle = "packaged vegetables fruits")
+
+
+# arragne most_baking/dog/veg to a table 
+combined_most = bind_rows(most_baking, most_dog, most_veg)
+kable(combined_most, 
+      caption = "Most popular items in three aisles") 
+
+
+```
+
+
+
+
+
+## Problem 2
+```{r}
+library(p8105.datasets)
+data("brfss_smart2010")
+```
+
+
