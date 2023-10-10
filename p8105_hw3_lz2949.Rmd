@@ -181,6 +181,73 @@ ggplot(ny_df, aes(x = year, fill = response)) + geom_bar() +
 
 ## Problem 3
 
+Load, tidy, merge, and organize the datasets: include all originally observed variables, exclude participants <21, exclude missing demographic data, encode data with reasonable variable classes. 
+
+```{r}
+nhanes_df = 
+  read_csv("./data/nhanes_covar.csv", skip = 4) |>
+  janitor::clean_names() |>
+  filter(age>=21) |>
+  drop_na() |>
+  mutate( 
+    sex = case_match(
+      sex,
+      1 ~ "male", 
+      2 ~ "female"
+    ), 
+    education=case_match(education, 
+                           1~ "Less than high school", 
+                         2 ~ "High school equivalent", 
+                         3 ~ "More than high school"))
+
+# drop na??
+nhanes_accel = 
+  read_csv("./data/nhanes_accel.csv") |>
+  janitor::clean_names()
+
+m_nhanes = inner_join(nhanes_df, nhanes_accel, by = "seqn")
+```
+
+Create a reader-friendly table for the number of men and women in each education category. 
+```{r}
+education_table = m_nhanes %>%
+  group_by(education, sex) %>%
+  summarize(count = n()) |>
+  pivot_wider(names_from =  sex, 
+              values_from = count)
+
+kable(education_table, caption = "Sex and corresponding education level")
+```
+
+Create a visualization of the age distributions for men and women in each education category. 
+```{r}
+ggplot(education_table, aes(x= education))+
+  geom_bar(aes(y = female, fill = "female"), position = "dodge", stat = "identity", alpha =0.5 )+
+  geom_bar(aes(y= male, fill = "male"), position = "dodge", stat = "identity", alpha = 0.5) +
+  labs(title = "Distribution of male and female in levels of education", 
+       x = "education", 
+       y = "number of individuals") 
+```
+
+Using tidies dataset, aggregate across minutes to create a total activity variable for each participant. Plot total activities (y) against age (x). Compare men to women and have separater panels for each education level. Include trend line or a smooth to illustrate differences. 
+
+```{r}
+sum_nhanes = m_nhanes |>
+  rowwise() |>
+  mutate(sum_acti = sum(c(min1:min1440))) |>
+  select(-6:-1445)
+
+ggplot(sum_nhanes, aes(x = age, y = sum_acti, color = sex)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE) +
+  facet_wrap(~ education) +
+  labs(
+    title = "Total Activity vs. Age by Education Level",
+    x = "Age",
+    y = "Total Activity"
+  ) 
+```
+
 
 
 
