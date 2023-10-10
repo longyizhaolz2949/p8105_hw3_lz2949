@@ -143,6 +143,43 @@ states_ten = states_ten |>
 
 Construct a dataset that is limited to Excellent responses and contains, year, state, and a variable averages the data_value accross locations within a state. Make a spaghetti plot. 
 
+```{r}
+exc_df = ordered_brfss |>
+  filter(response == "Excellent") |>
+  group_by(locationabbr, year) |>
+  mutate(ave_data = mean(data_value)) |>
+  select(year, locationabbr, ave_data) 
+
+ggplot(exc_df, aes(x = year, 
+                  y = ave_data,
+                  group = locationabbr, 
+                  color = locationabbr)) +
+  geom_line() +
+  labs(
+    title = "Average Data Value Over Time by State (Excellent Responses)",
+    x = "Year",
+    y = "Average Data Value"
+  )
+```
+
+Make a two-panel plot showing, for 2006/2010, distribution of data_value for responses (poor to excellent) among locations in NY state. 
+
+```{r}
+ny_df = ordered_brfss |>
+  filter(locationabbr == "NY", year %in% c("2006", "2010")) 
+
+ggplot(ny_df, aes(x = year, fill = response)) + geom_bar() +
+  labs(
+    title = "Distribution or Response by Year", 
+    x = "Year", 
+    y = "Count"
+  )
+
+# among locations??
+
+```
+
+## Problem 3
 
 
 
