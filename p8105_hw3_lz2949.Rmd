@@ -113,7 +113,7 @@ states_ten = states_ten |>
 ```
 Comments: In 2002, there are `r nrow(states_two)` states observed at 7 or more locations; in 2010, the number is `r nrow(states_ten)`. 
 
-Construct a dataset that is limited to Excellent responses and contains, year, state, and a variable averages the data_value accross locations within a state. Make a spaghetti plot. 
+Construct a dataset that is limited to Excellent responses and contains, year, state, and a variable averages the data_value across locations within a state. Make a spaghetti plot. 
 ```{r}
 exc_df = ordered_brfss |>
   filter(response == "Excellent") |>
@@ -171,8 +171,8 @@ nhanes_df =
                            1~ "Less than high school", 
                          2 ~ "High school equivalent", 
                          3 ~ "More than high school"))
+nhanes_df$education = factor(nhanes_df$education, levels = c("Less than high school", "High school equivalent", "More than high school")) # rank education 
 
-# drop na??
 nhanes_accel = 
   read_csv("./data/nhanes_accel.csv") |>
   janitor::clean_names()
@@ -190,57 +190,52 @@ education_table = m_nhanes |>
 
 kable(education_table, caption = "Sex and corresponding education level")
 ```
-Comments: At high school equivalent, number of males is larger than female, there are
+Comments: At high school equivalent, number of males is larger than female, there are `r education_table[1,3]` males and `r education_table[1,2]` females. For other two education levels, the number of males and females are similar. 
 
 Create a visualization of the age distributions for men and women in each education category. 
 ```{r}
-ggplot(education_table, aes(x= education))+
-  geom_bar(aes(y = female, fill = "female"), position = "dodge", stat = "identity", alpha =0.5 )+
-  geom_bar(aes(y= male, fill = "male"), position = "dodge", stat = "identity", alpha = 0.5) +
-  labs(title = "Distribution of male and female in levels of education", 
-       x = "education", 
-       y = "number of individuals") 
+ggplot(m_nhanes, aes(x= education, y = age, fill = sex))+
+  geom_boxplot() +
+  labs(title = "Age distribution of male and female in levels of education", 
+       x = "education levels", 
+       y = "age") 
 ```
-Comments: 
-
-Using tidies dataset, aggregate across minutes to create a total activity variable for each participant. Plot total activities (y) against age (x). Compare men to women and have separater panels for each education level. Include trend line or a smooth to illustrate differences. 
+Comments: From the boxplot, at the education level 'more than high school', the median age of both sex is the lowest. For female, the median age is `r median(m_nhanes |> filter(sex == "female", education == "More than high school") |>pull(age))`; for male, the median age is `r median(m_nhanes |> filter(sex == "male", education == "More than high school") |>pull(age))`. At less than high school education, the female median age is `r median(m_nhanes |> filter(sex == "female", education == "Less than high school") |>pull(age))` and the male age is `r median(m_nhanes |> filter(sex == "male", education == "Less than high school") |>pull(age))`.  
 
 ```{r}
-sum_nhanes = m_nhanes |>
-  rowwise() |>
-  mutate(sum_acti = sum(c(min1:min1440))) |>
-  select(-6:-1445)
+m_nhanes$sum_nhanes = rowSums(m_nhanes[, 6:1445])
 
-ggplot(sum_nhanes, aes(x = age, y = sum_acti, color = sex)) +
+ggplot(m_nhanes, aes(x = age, y = sum_nhanes, color = sex)) +
   geom_point() +
-  geom_smooth(method = "lm", formula = y ~ x, se = FALSE) +
-  facet_wrap(~ education) +
+  geom_smooth(se = FALSE) +
+  facet_wrap(.~ education) +
   labs(
     title = "Total Activity vs. Age by Education Level",
     x = "Age",
     y = "Total Activity"
   ) 
 ```
-Comments: 
-
-Make a three-panel plot that shows the 24 hour activity time courses for each education level and use color to indicate sex. 
+Comments: At high school equivalent and more than high school education levels, males tend to have less daily total activity than females. For example, in the more than high school group, the average total activity for male is `r mean(m_nhanes |> filter(sex == "male", education == "More than high school") |>pull(sum_nhanes))` minutes. For female, the number is `r mean(m_nhanes |> filter(sex == "female", education == "More than high school") |>pull(sum_nhanes))` minutes. Additionally, in all three groups, higher age people tend to have lower total activities. 
 
 ```{r}
 day_activity = m_nhanes |>
   pivot_longer(cols = min1:min1440, names_to = "activity_minutes", values_to = "activity") 
 
-day_activity$activity_minutes = gsub("min", "", day_activity$activity_minutes) # remove "min" in the xlabel
+day_activity$activity_minutes = as.numeric(gsub("min", "", day_activity$activity_minutes)) # remove "min" in the xlabel, and convert it to dbl
 
 ggplot(day_activity, aes(x=activity_minutes, y = activity, color = sex))+
-  geom_line() +
-  facet_wrap(~education, scales = "free_y", ncol = 1) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(se = FALSE) +
+  facet_grid(.~ education) +
   labs(
     title = "plot of 24hrs activity",
     x = "activity minuntes in 24hrs",
     y = "activity"
   ) +
-  scale_x_discrete(labels = function(x) ifelse(seq_along(x) %% 70 == 0, x, ""))
-# not sure
+  scale_x_continuous(limits = c(0,1440), 
+                     breaks = seq(0,1440,150) # have x-labels every 150 mins 
+                     )+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) # to make all labels visible
 ```
 Comments: 
 
