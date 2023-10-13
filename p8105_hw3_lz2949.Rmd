@@ -33,8 +33,10 @@ frequent_aisles =
   summarize(total_item = sum(order_number)) |>
   arrange(desc(total_item)) # most items ordered from 
 ```
+Comments: In this dataset, there are `r instacart |>select(aisle_id) |> distinct() |> count()` distinct aisles. Most items are ordered from `r frequent_aisles$aisle[1:5]`. 
 
-make a plot that shows the number of items ordered in each aisle, (only aisles ordered more than 10000 items)
+Make a plot that shows the number of items ordered in each aisle, (only aisles ordered more than 10000 items), aisles are ordered by ascending number of items. 
+
 ```{r}
 instacart |>
   count(aisle) |> 
@@ -45,9 +47,9 @@ instacart |>
   labs(title = "Number of items ordered in each aisle") +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
+Comments: From the plot, items ordered from resh vegetable and fresh fruit are the most. 
 
 Make a table showing the three most popular items in "baking ingredients", "dog food care", and "packaged vegetable fruits"
-
 ```{r}
 instacart |> 
   filter(aisle %in% c("baking ingredients", "dog food care", "packaged vegetables fruits")) |>
@@ -81,7 +83,8 @@ library(p8105.datasets)
 data("brfss_smart2010")
 ```
 
-Data cleaning 
+Data cleaning: 
+I changed the Locationabbr to state_name and Locationdesc to county_name to make these two variable names easier to understand. 
 ```{r}
 brfss_df = 
   brfss_smart2010 |>
@@ -96,7 +99,7 @@ order_c = c("Poor", "Fair", "Good", "Very good", "Excellent")
 ordered_brfss = brfss_df[order(factor(brfss_df$response, levels = order_c)),]
 ```
 
-In 2002/2010, which states were observed at 7 or more locations?
+In 2002/2010, which states were observed at 7 or more locations. 
 ```{r}
 # year 2002
 states_two = ordered_brfss |>
@@ -114,7 +117,7 @@ states_ten = ordered_brfss |>
 states_ten = states_ten |>
   filter(unique_locations >= 7)
 ```
-Comments: In 2002, there are `r nrow(states_two)` states observed at 7 or more locations, they are `r print(states_two$state_name)`; in 2010, the number is `r nrow(states_ten)`, they are `r print(states_ten$state_name)`. 
+Comments: In 2002, there are `r nrow(states_two)` states observed at 7 or more locations, they are `r states_two$state_name`; in 2010, the number is `r nrow(states_ten)`, they are `r states_ten$state_name`. 
 
 I dropped the legend to make the plot easier to intepret. 
 ```{r}
@@ -135,7 +138,7 @@ ggplot(exc_df, aes(x = year,
     y = "Average Data Value"
   )
 ```
-Comments: The plot has the general trend of lowering average data value over time. 
+Comments: The plot has the general trend of lowering average data value over time. For some states, the fluctuation in data value is really big. Since the plot contains too many data, it is hard to intepret it detailly. 
 
 Make a two-panel plot showing, for 2006/2010, distribution of data_value for responses (poor to excellent) among locations in NY state. 
 ```{r}
