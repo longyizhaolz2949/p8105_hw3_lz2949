@@ -116,7 +116,7 @@ states_ten = states_ten |>
 ```
 Comments: In 2002, there are `r nrow(states_two)` states observed at 7 or more locations, they are `r print(states_two$state_name)`; in 2010, the number is `r nrow(states_ten)`, they are `r print(states_ten$state_name)`. 
 
-Construct a dataset that is limited to Excellent responses and contains, year, state, and a variable averages the data_value across locations within a state. Make a spaghetti plot. 
+I dropped the legend to make the plot easier to intepret. 
 ```{r}
 exc_df = ordered_brfss |>
   filter(response == "Excellent") |>
@@ -128,14 +128,14 @@ ggplot(exc_df, aes(x = year,
                   y = ave_data,
                   group = state_name, 
                   color = state_name)) +
-  geom_line() +
+  geom_line(show.legend = FALSE) +
   labs(
     title = "Average Data Value Over Time by State (Excellent Responses)",
     x = "Year",
     y = "Average Data Value"
   )
 ```
-Comments: drop the legend, general trend 
+Comments: The plot has the general trend of lowering average data value over time. 
 
 Make a two-panel plot showing, for 2006/2010, distribution of data_value for responses (poor to excellent) among locations in NY state. 
 ```{r}
@@ -145,12 +145,12 @@ ny_df = ordered_brfss |>
 ny_df$year = as.character(ny_df$year)
 ggplot(ny_df, aes(x = fct_inorder(response), y = data_value, fill = year)) + 
   geom_boxplot() +
+  facet_grid(.~year)+
   labs(
     title = "Distribution or Response by Year", 
     x = "Response", 
     y = "Count"
   )
-
 
 ```
 Comments: In 2010, more responses are collected. In 2010, there are `r nrow(subset(ny_df, year == "2010"))` responses, and in 2006, the number is `r nrow(subset(ny_df, year == "2006"))`. By looking at the plot, poor has the least data value and very good has the highest data value; for example, in year 2006, "Poor" has a median of `r median(ny_df |> filter(year == "2006", response == "Poor") |>pull(data_value))`, while "Very good" has a median of `r median(ny_df |> filter(year == "2006", response == "Very good") |>pull(data_value))`. 
@@ -228,8 +228,8 @@ day_activity = m_nhanes |>
 day_activity$activity_minutes = as.numeric(gsub("min", "", day_activity$activity_minutes)) # remove "min" in the xlabel, and convert it to dbl
 
 ggplot(day_activity, aes(x=activity_minutes, y = activity, color = sex))+
-  geom_point(alpha = 0.1) +
-  geom_smooth(se = FALSE) +
+  geom_point(alpha = 0.05) +
+  geom_smooth(se = FALSE, alpha = 0.7) +
   facet_grid(.~ education) +
   labs(
     title = "plot of 24hrs activity",
@@ -241,5 +241,5 @@ ggplot(day_activity, aes(x=activity_minutes, y = activity, color = sex))+
                      )+
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) # to make all labels visible
 ```
-Comments: 
+Comments: From these plots, females and males at each education level has similar activity trend in the day. People are most active in the morning and afternoon. From the trend line, females are more active than males when they have education at "high school equivalent" or "more than high school". 
 
