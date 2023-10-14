@@ -7,7 +7,6 @@ output: github_document
 
 ```{r}
 library(tidyverse)
-library(dplyr)
 library(ggplot2)
 library(knitr)
 
@@ -28,8 +27,8 @@ This dataset contains `r nrow(instacart)` rows and `r ncol(instacart)` columns, 
 ```{r}
 num_aisles = unique(instacart$aisle_id) # number of distinct aisles numbers
 frequent_aisles = 
-  instacart %>% 
-  group_by(aisle) %>%
+  instacart |>
+  group_by(aisle) |>
   summarize(total_item = sum(order_number)) |>
   arrange(desc(total_item)) # most items ordered from 
 ```
@@ -47,7 +46,7 @@ instacart |>
   labs(title = "Number of items ordered in each aisle") +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
-Comments: From the plot, items ordered from resh vegetable and fresh fruit are the most. 
+Comments: From the plot, items ordered from fresh vegetable and fresh fruit are the most; items ordered from butter and oils vinegars are the least. 
 
 Make a table showing the three most popular items in "baking ingredients", "dog food care", and "packaged vegetable fruits"
 ```{r}
@@ -117,7 +116,7 @@ states_ten = ordered_brfss |>
 states_ten = states_ten |>
   filter(unique_locations >= 7)
 ```
-Comments: In 2002, there are `r nrow(states_two)` states observed at 7 or more locations, they are `r states_two$state_name`; in 2010, the number is `r nrow(states_ten)`, they are `r states_ten$state_name`. 
+Comments: In 2002, there are `r nrow(states_two)` states observed at 7 or more locations, they are `r states_two |> pull(state_name)`; in 2010, the number is `r nrow(states_ten)`, they are `r states_ten |> pull(state_name)`; indicating more cities/counties participated in the survay. 
 
 I dropped the legend to make the plot easier to intepret. 
 ```{r}
@@ -138,14 +137,15 @@ ggplot(exc_df, aes(x = year,
     y = "Average Data Value"
   )
 ```
-Comments: The plot has the general trend of lowering average data value over time. For some states, the fluctuation in data value is really big. Since the plot contains too many data, it is hard to intepret it detailly. 
+Comments: The plot has the general trend of lowering average data value over time, indicating people are becoming less confident in their health. For some states, the fluctuation in data value is big. Since the plot contains too many data, it is hard to interpret it in detail. 
+
 
 Make a two-panel plot showing, for 2006/2010, distribution of data_value for responses (poor to excellent) among locations in NY state. 
 ```{r}
 ny_df = ordered_brfss |>
   filter(state_name == "NY", year %in% c(2006, 2010)) 
 
-ny_df$year = as.character(ny_df$year)
+ny_df = transform(ny_df, year = as.character(year))
 ggplot(ny_df, aes(x = fct_inorder(response), y = data_value, fill = year)) + 
   geom_boxplot() +
   facet_grid(.~year)+
@@ -156,7 +156,7 @@ ggplot(ny_df, aes(x = fct_inorder(response), y = data_value, fill = year)) +
   )
 
 ```
-Comments: In 2010, more responses are collected. In 2010, there are `r nrow(subset(ny_df, year == "2010"))` responses, and in 2006, the number is `r nrow(subset(ny_df, year == "2006"))`. By looking at the plot, poor has the least data value and very good has the highest data value; for example, in year 2006, "Poor" has a median of `r median(ny_df |> filter(year == "2006", response == "Poor") |>pull(data_value))`, while "Very good" has a median of `r median(ny_df |> filter(year == "2006", response == "Very good") |>pull(data_value))`. 
+Comments: In 2010, more responses are collected. In 2010, there are `r nrow(subset(ny_df, year == "2010"))` responses, and in 2006, the number is `r nrow(subset(ny_df, year == "2006"))`. By looking at the plot, poor has the least data value and very good has the highest data value; for example, in year 2006, "Poor" has a median of `r median(ny_df |> filter(year == "2006", response == "Poor") |>pull(data_value))`, while "Very good" has a median of `r median(ny_df |> filter(year == "2006", response == "Very good") |>pull(data_value))`. Both in 2006 and 2010, most people think their overall health is `good` or `very good`. 
 
 ## Problem 3
 
@@ -178,11 +178,11 @@ nhanes_df =
                            1~ "Less than high school", 
                          2 ~ "High school equivalent", 
                          3 ~ "More than high school"))
-nhanes_df$education = factor(nhanes_df$education, levels = c("Less than high school", "High school equivalent", "More than high school")) # rank education 
+nhanes_df = nhanes_df[order(factor(nhanes_df$education, levels = c("Less than high school", "High school equivalent", "More than high school"))),] # rank education 
 
 nhanes_accel = 
   read_csv("./data/nhanes_accel.csv") |>
-  janitor::clean_names()
+  janitor::clean_names() 
 
 m_nhanes = inner_join(nhanes_df, nhanes_accel, by = "seqn")
 ```
@@ -210,25 +210,25 @@ ggplot(m_nhanes, aes(x= education, y = age, fill = sex))+
 Comments: From the boxplot, at the education level 'more than high school', the median age of both sex is the lowest. For female, the median age is `r median(m_nhanes |> filter(sex == "female", education == "More than high school") |>pull(age))`; for male, the median age is `r median(m_nhanes |> filter(sex == "male", education == "More than high school") |>pull(age))`. At less than high school education, the female median age is `r median(m_nhanes |> filter(sex == "female", education == "Less than high school") |>pull(age))` and the male age is `r median(m_nhanes |> filter(sex == "male", education == "Less than high school") |>pull(age))`.  
 
 ```{r}
-m_nhanes$sum_nhanes = rowSums(m_nhanes[, 6:1445])
+m_nhanes= transform(m_nhanes, sum_nhanes = rowSums(m_nhanes[, 6:1445]))
 
 ggplot(m_nhanes, aes(x = age, y = sum_nhanes, color = sex)) +
-  geom_point() +
+  geom_point(alpha = 0.5) +
   geom_smooth(se = FALSE) +
-  facet_wrap(.~ education) +
+  facet_grid(.~ education) +
   labs(
     title = "Total Activity vs. Age by Education Level",
     x = "Age",
     y = "Total Activity"
   ) 
 ```
-Comments: At high school equivalent and more than high school education levels, males tend to have less daily total activity than females. For example, in the more than high school group, the average total activity for male is `r mean(m_nhanes |> filter(sex == "male", education == "More than high school") |>pull(sum_nhanes))` minutes. For female, the number is `r mean(m_nhanes |> filter(sex == "female", education == "More than high school") |>pull(sum_nhanes))` minutes. Additionally, in all three groups, higher age people tend to have lower total activities. 
+Comments: At high school equivalent and more than high school education levels, males tend to have less daily total activity than females at all age groups. For example, in the more than high school group, the average total activity for male is `r mean(m_nhanes |> filter(sex == "male", education == "More than high school") |>pull(sum_nhanes))` minutes. For female, the number is `r mean(m_nhanes |> filter(sex == "female", education == "More than high school") |>pull(sum_nhanes))` minutes. Additionally, in all three groups, higher age people tend to have lower total activities. In less than high school and more than high school groups, people at age ~60 have the most total activity in a day. In high school equivalent group, peole at age ~40 have the most total activity in a day compare to other age groups. 
 
 ```{r}
 day_activity = m_nhanes |>
   pivot_longer(cols = min1:min1440, names_to = "activity_minutes", values_to = "activity") 
 
-day_activity$activity_minutes = as.numeric(gsub("min", "", day_activity$activity_minutes)) # remove "min" in the xlabel, and convert it to dbl
+day_activity= transform(day_activity, activity_minutes =  as.numeric(gsub("min", "", activity_minutes)))# remove "min" in the xlabel, and convert it to dbl
 
 ggplot(day_activity, aes(x=activity_minutes, y = activity, color = sex))+
   geom_point(alpha = 0.05) +
@@ -244,5 +244,5 @@ ggplot(day_activity, aes(x=activity_minutes, y = activity, color = sex))+
                      )+
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) # to make all labels visible
 ```
-Comments: From these plots, females and males at each education level has similar activity trend in the day. People are most active in the morning and afternoon. From the trend line, females are more active than males when they have education at "high school equivalent" or "more than high school". 
+Comments: From these plots, females and males at each education level has similar activity trend in the day. Participants are most active between `min400` to `min1200`; Participants are least active around `min300` in all three education levels which may because at that time most people were sleeping. From the trend line, females are little more active than males when they have education at "high school equivalent" or "more than high school". In `more than high school` group, some participants have very intense activity between `min400` to `min1200`. 
 
